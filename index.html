@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Flores Amarillas 3D</title>
+<style>
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html,body{
+    width:100%; height:100%;
+    background:#000;
+    overflow:hidden;
+    font-family:'Padauk','Myanmar Text','Pyidaungsu','Segoe UI', Tahoma, sans-serif;
+  }
+
+  .scene{
+    position:relative;
+    width:100%;
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective: 500px;
+    background: radial-gradient(circle at 50% 42%, #1a1200 0%, #000 55%);
+  }
+
+  /* ---------- starfield ---------- */
+  .stars{
+    position:absolute; inset:0;
+    overflow:hidden;
+    pointer-events:none;
+  }
+  .star{
+    position:absolute;
+    background:#fff;
+    border-radius:50%;
+    opacity:.8;
+    animation: twinkle 2.5s ease-in-out infinite, fall linear infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{ opacity:.2; }
+    50%{ opacity:1; }
+  }
+  @keyframes fall{
+    0%{ transform: translateY(-10px); }
+    100%{ transform: translateY(110vh); }
+  }
+
+  /* ---------- title ---------- */
+  .title{
+    position:absolute;
+    top: 6%;
+    left:50%;
+    transform: translateX(-50%);
+    text-align:center;
+    z-index:20;
+    color:#ffe97a;
+    font-weight:800;
+    font-size: clamp(1.2rem, 5vw, 2.1rem);
+    line-height:1.25;
+    text-shadow:
+      0 0 8px #ffdd33,
+      0 0 18px #ffcc00,
+      0 0 34px #ff9900;
+    animation: glowPulse 2.2s ease-in-out infinite;
+  }
+  @keyframes glowPulse{
+    0%,100%{ filter: brightness(1); }
+    50%{ filter: brightness(1.35); }
+  }
+
+  /* ---------- ground plane (tilted, receding) ---------- */
+  .ground{
+    position:absolute;
+    top: 46%;
+    left:50%;
+    width: 1000px;
+    height: 1000px;
+    transform: translate(-50%,-50%) rotateX(72deg);
+    transform-style: preserve-3d;
+  }
+
+  /* glowing portal ring at the vanishing point */
+  .ring{
+    position:absolute;
+    top:50%; left:50%;
+    width: 180px; height:180px;
+    transform: translate(-50%,-50%);
+    border-radius:50%;
+    background: radial-gradient(circle, #000 0%, #000 35%, #ffef8a 55%, #ffcc00 62%, rgba(255,204,0,0) 72%);
+    box-shadow: 0 0 60px 20px rgba(255,204,0,.55);
+    animation: ringPulse 2.4s ease-in-out infinite;
+  }
+  @keyframes ringPulse{
+    0%,100%{ box-shadow: 0 0 60px 20px rgba(255,204,0,.5); }
+    50%{ box-shadow: 0 0 90px 30px rgba(255,204,0,.75); }
+  }
+
+  /* radial floating words */
+  .word{
+    position:absolute;
+    top:50%; left:50%;
+    white-space:nowrap;
+    font-weight:700;
+    color:#fff;
+    text-shadow: 0 0 6px rgba(255,255,255,.6);
+  }
+  .word.yellow{
+    color:#fff45c;
+    text-shadow: 0 0 8px #ffee00, 0 0 16px #ffcc00;
+  }
+  .word .star-ico{ margin-left:4px; }
+
+  /* sunflowers scattered on the ground */
+  .flower{
+    position:absolute;
+    top:50%; left:50%;
+    font-size: 26px;
+    filter: drop-shadow(0 0 6px rgba(255,200,0,.5));
+  }
+
+  .credit{
+    position:absolute;
+    bottom: 4%;
+    left:50%;
+    transform: translateX(-50%);
+    color:#ffdf80;
+    font-size:.85rem;
+    opacity:.7;
+    z-index:20;
+  }
+</style>
+</head>
+<body>
+
+<div class="scene">
+  <div class="stars" id="stars"></div>
+
+  <div class="title">ချစ်ရတဲ့ နွယ်<br>အတွက် အဝါရောင်ပန်းများ 🌻</div>
+
+  <div class="ground" id="ground">
+    <div class="ring"></div>
+  </div>
+
+  <div class="credit">💓 ချစ်တယ်နော် 💓</div>
+</div>
+
+<script>
+/* ---------------- Stars ---------------- */
+const starsBox = document.getElementById('stars');
+for(let i=0;i<90;i++){
+  const s = document.createElement('div');
+  s.className = 'star';
+  const size = Math.random()*2.4 + 0.6;
+  s.style.width = size+'px';
+  s.style.height = size+'px';
+  s.style.left = Math.random()*100 + '%';
+  s.style.top = Math.random()*100 + '%';
+  s.style.animationDuration = (2 + Math.random()*2).toFixed(2)+'s, '+(6 + Math.random()*8).toFixed(2)+'s';
+  s.style.animationDelay = (Math.random()*5).toFixed(2)+'s';
+  starsBox.appendChild(s);
+}
+
+/* ---------------- Radial words on the ground ---------------- */
+const ground = document.getElementById('ground');
+const phrases = [
+  "ချစ်ရတဲ့ နွယ် 🌻", "For Nwe 💗", "ချစ်တယ်နော် 💓"
+];
+
+const centerX = 500, centerY = 500; // ground is 1000x1000
+const ringCount = 3;
+
+let idx = 0;
+for(let ring = 0; ring < ringCount; ring++){
+  const radius = 160 + ring * 140;
+  const count = 5 + ring * 2;
+  for(let i = 0; i < count; i++){
+    const angle = (i / count) * Math.PI * 2 + ring * 0.4;
+    const x = centerX + Math.cos(angle) * radius;
+    const y = centerY + Math.sin(angle) * radius;
+
+    const el = document.createElement('div');
+    el.className = 'word' + (Math.random() > 0.5 ? ' yellow' : '');
+    el.textContent = phrases[idx % phrases.length];
+    idx++;
+
+    const rotateDeg = (angle * 180/Math.PI) + 90;
+
+    el.style.left = x + 'px';
+    el.style.top = y + 'px';
+    el.style.fontSize = '0.68rem';
+    el.style.transform =
+      `translate(-50%,-50%) rotateX(-72deg) rotate(${rotateDeg}deg) scale(0.85)`;
+    el.style.opacity = 0.85;
+
+    ground.appendChild(el);
+  }
+}
+
+/* ---------------- Sunflowers scattered on the ground ---------------- */
+const flowerSpots = [
+  {r: 220, a: 0.9}, {r: 260, a: 2.1}, {r: 300, a: 3.4}, {r: 340, a: 4.6},
+  {r: 380, a: 5.6}, {r: 300, a: 1.6}, {r: 420, a: 0.3}, {r: 200, a: 4.0},
+  {r: 450, a: 2.8}, {r: 250, a: 5.9}
+];
+flowerSpots.forEach(spot=>{
+  const x = centerX + Math.cos(spot.a) * spot.r;
+  const y = centerY + Math.sin(spot.a) * spot.r;
+
+  const f = document.createElement('div');
+  f.className = 'flower';
+  f.textContent = '🌻';
+  f.style.left = x+'px';
+  f.style.top = y+'px';
+  f.style.transform = `translate(-50%,-50%) rotateX(-72deg) scale(0.55)`;
+  ground.appendChild(f);
+});
+</script>
+
+</body>
+</html>
+
